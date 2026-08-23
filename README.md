@@ -32,7 +32,7 @@ Para cumplir con los estándares de la arquitectura REST en esta entrega, aplica
 
 La API expone los siguientes endpoints organizados por recursos:
 
-#### 🔹 Categorías y Productos (CRUD Completo - Resource Controllers)
+#### 📝 Categorías y Productos (CRUD Completo - Resource Controllers)
 * `GET /api/categorias` - Lista todas las categorías.
 * `POST /api/categorias` - Crea una nueva categoría.
 * `GET /api/categorias/{id}` - Muestra una categoría específica.
