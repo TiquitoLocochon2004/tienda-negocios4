@@ -68,13 +68,13 @@ Para garantizar la integridad y seguridad de la aplicación, se incorporaron def
 Para poner en marcha esta versión con JWT en tu entorno local:
 
 1. **Requisitos previos**
-   Tener PHP, Composer y MySQL activos (XAMPP).
+  Tener PHP, Composer y MySQL activos (XAMPP).
 
 2. **Instalar dependencias**
-   Ejecuta en la terminal del proyecto:
-   ```Bash
-   composer install
-   ```
+  Ejecuta en la terminal del proyecto:
+  ```Bash
+  composer install
+  ```
 
 3. **Configurar el entorno y las claves de seguridad**
 Asegúrate de que tu archivo .env esté configurado con tu conexión a la base de datos y genera las llaves de encriptación y JWT ejecutando:
