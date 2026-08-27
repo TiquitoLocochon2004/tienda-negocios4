@@ -133,7 +133,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\r\n  \"nombre\": \"Coca Cola 1.5L\",\r\n  \"precio\": \"2.50\",\r\n  \"stock\": 1\r\n}"
+              "raw": "{\r\n  \"nombre\": \"Coca Cola 1.5L\",\r\n  \"descripcion\": \"Refresco de cola de 1.5 litros\",\r\n  \"precio\": 2.50,\r\n  \"stock\": 10,\r\n  \"categoria_id\": 1\r\n}"
             },
             "url": {
               "raw": "{{base_url}}/productos/1",
@@ -535,6 +535,36 @@
           "response": []
         }
       ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "packages": {},
+        "requests": {},
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": ""
     }
   ]
 }

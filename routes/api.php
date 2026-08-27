@@ -4,7 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\CategoriaController;
 use App\Http\Controllers\Api\ProductoController;
-use App\Http\Controllers\Api\CarritoController;
+use App\Http\Controllers\Api\CarritoItemController;
 use App\Http\Controllers\Api\CheckoutController;
 
 /*
@@ -22,11 +22,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::apiResource('categorias', CategoriaController::class);
 Route::apiResource('productos', ProductoController::class);
 
-Route::get('/carrito', [CarritoController::class, 'index']);
-Route::post('/carrito', [CarritoController::class, 'store']);
-Route::put('/carrito/{id}', [CarritoController::class, 'update']);
-Route::delete('/carrito/{id}', [CarritoController::class, 'destroy']);
-Route::delete('/carrito', [CarritoController::class, 'vaciar']);
+Route::get('/carrito', [CarritoItemController::class, 'index']);
+Route::post('/carrito', [CarritoItemController::class, 'store']);
+Route::put('/carrito/{id}', [CarritoItemController::class, 'update']);
+Route::delete('/carrito/{id}', [CarritoItemController::class, 'destroy']);
+Route::delete('/carrito/vaciar', [CarritoItemController::class, 'vaciar']);
 
 Route::get('/checkout/resumen', [CheckoutController::class, 'resumen']);
 Route::post('/checkout/confirmar', [CheckoutController::class, 'confirmar']);
