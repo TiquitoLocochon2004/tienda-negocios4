@@ -1,122 +1,111 @@
-# Tienda de Negocios - Entrega 3
-## Exposición de la Tienda como API REST — Carrito, Checkout y DTOs
+# Tienda de Negocios - Entrega 4
+## Seguridad de la API con JWT, Autenticación y Protección contra Vulnerabilidades
 
-¡Proyecto correspondiente a la tercera entrega, convirtiendo la tienda en una API REST robusta, consumible por cualquier cliente (Probado con Postman) con gestión de inventario y DTOs!
+¡Proyecto correspondiente a la cuarta entrega, elevando la seguridad de nuestra tienda en línea mediante la implementación de autenticación basada en JSON Web Tokens (JWT), middlewares de protección de rutas y mitigación de ataques comunes!
 
 ---
 
 ### 🎯 1. Objetivo del Trabajo
 
-Construir la API REST de la tienda: exponer productos, carrito y proceso de
-compra como endpoints HTTP siguiendo buenas prácticas de diseño de API,
-con manejo estandarizado de errores, DTOs y formato JSON, verificados con
-Postman.
+Proteger la API construida en la Entrega 3 mediante autenticación basada en JSON Web Tokens (JWT) y middlewares, aplicando buenas prácticas de seguridad para evitar vulnerabilidades comunes.
 
 ---
 
-### 🌐 2. Principios y Estándares REST
+### 🔐 2. Autenticación basada en JSON Web Tokens (JWT)
 
-Para cumplir con los estándares de la arquitectura REST en esta entrega, aplicamos los siguientes conceptos clave:
+Para cumplir con los estándares de seguridad de una API REST *stateless*, se implementó el paquete `php-open-source-saver/jwt-auth`. El ciclo de vida y la estructura del token operan de la siguiente manera:
 
-* **Arquitectura Cliente-Servidor:** La interfaz de cliente (en este caso, simulada y probada mediante Postman) está totalmente desacoplada de la lógica del servidor y de la base de datos. La única vía de comunicación es a través de peticiones HTTP estandarizadas.
-* **Comunicación sin estado (Stateless):** Cada petición HTTP contiene toda la información necesaria para que el servidor la procese, garantizando la escalabilidad de la API.
-* **Uso correcto de Verbos HTTP sobre los Recursos:**
-  * `GET`: Se utiliza para consultar recursos de forma segura y sin alterar el estado (ej. listar productos, ver el contenido del carrito, consultar el resumen de compra).
-  * `POST`: Se utiliza para la creación de nuevos recursos o ejecución de procesos de negocio (ej. crear un producto, agregar un ítem al carrito, confirmar el checkout final).
-  * `PUT`: Se emplea para la actualización completa o modificación del estado de un recurso existente (ej. actualizar la cantidad de un producto específico en el carrito).
-  * `DELETE`: Se utiliza para remover recursos del servidor (ej. eliminar un producto del carrito o vaciarlo por completo).
-
----
-
-### ⚙️ 3. Endpoints de la API REST (`routes/api.php`)
-
-La API expone los siguientes endpoints organizados por recursos:
-
-#### 📝 Categorías y Productos (CRUD Completo - Resource Controllers)
-* `GET /api/categorias` - Lista todas las categorías.
-* `POST /api/categorias` - Crea una nueva categoría.
-* `GET /api/categorias/{id}` - Muestra una categoría específica.
-* `PUT /api/categorias/{id}` - Actualiza una categoría.
-* `DELETE /api/categorias/{id}` - Elimina una categoría.
-* `GET /api/productos` - Lista todos los productos con su respectiva categoría.
-* `POST /api/productos` - Crea un nuevo producto (con validación estricta y limpieza de espacios).
-* `GET /api/productos/{id}` - Muestra el detalle de un producto.
-* `PUT /api/productos/{id}` - Actualiza los datos de un producto.
-* `DELETE /api/productos/{id}` - Elimina un producto.
-
-#### 🛒 Carrito de Compras (Persistencia en Base de Datos)
-* `GET /api/carrito` - Muestra los ítems actuales del carrito y calcula el subtotal formateado a dos decimales.
-* `POST /api/carrito` - Agrega un producto al carrito (valida existencia e inventario disponible).
-* `PUT /api/carrito/{id}` - Actualiza la cantidad de un producto en el carrito.
-* `DELETE /api/carrito/{id}` - Elimina un producto específico del carrito.
-* `DELETE /api/carrito` - Vacía por completo el carrito del usuario.
-
-#### 💳 Checkout y Resumen de Compra
-* `GET /api/checkout/resumen` - Devuelve el desglose detallado de la compra (subtotal, impuestos, costo de envío y total general) estructurado mediante DTOs.
-* `POST /api/checkout/confirmar` - Valida el stock final, procesa la compra con datos de envío y pago, descuenta el inventario de la base de datos, vacía el carrito y retorna la orden confirmada.
+* **Estructura del JWT:** Está compuesto por tres partes separadas por puntos (`.`):
+  1. **Header (Cabecera):** Define el algoritmo de firma utilizado (ej. HS256).
+  2. **Payload (Carga útil):** Contiene los claims o datos del usuario autenticado (como el `sub` o ID de usuario), fecha de emisión (`iat`), expiración (`exp`) y tiempo de vida. Por seguridad, **no se incluye información sensible** como la contraseña.
+  3. **Firma (Signature):** Garantiza que el token no haya sido manipulado en tránsito, firmándose en el servidor con una clave secreta (`JWT_SECRET`).
+* **Ciclo de Vida:**
+  1. El usuario se registra (`/api/register`) o inicia sesión (`/api/login`) enviando sus credenciales.
+  2. El servidor valida las credenciales y emite un token JWT firmado de duración controlada.
+  3. El cliente almacena el token y lo envía en las subsecuentes peticiones dentro de la cabecera HTTP bajo el formato: `Authorization: Bearer <token>`.
+  4. El middleware intercepta la petición, verifica la validez y firma del token, y permite el acceso al recurso o rechaza la petición con un código `401 Unauthorized` si el token es inválido, ha expirado o está ausente.
 
 ---
 
-### 📦 4. Uso de Data Transfer Objects (DTOs)
+### 🗂️ 3. Endpoints Públicos y Protegidos (`routes/api.php`)
 
-Para estructurar de manera limpia y tipada los datos que viajan desde el servidor hacia el cliente en las respuestas más complejas, se implementaron dos DTOs principales dentro de la carpeta `app/DTOs/`:
+Las rutas de la API se dividieron estratégicamente utilizando un middleware de autenticación (`auth:api`):
 
-1. **`CheckoutDataDTO`**: Estructura el resumen financiero de la compra, separando el bloque de totales formateados estrictamente con dos decimales (subtotal, impuestos, costo de envío y total) y el listado detallado de los ítems involucrados.
-2. **`OrdenConfirmadaDTO`**: Estructura el recibo y comprobante final de la transacción exitosa, encapsulando el ID de la orden simulada, el estado del pago, la dirección de envío, el total pagado y la fecha exacta de la operación.
+#### 🔓 Rutas Públicas (No requieren token)
+* `POST /api/register` - Registro de nuevos usuarios en el sistema.
+* `POST /api/login` - Autenticación de usuarios y emisión del JWT correspondiente.
+* `GET /api/categorias` - Consulta general de categorías.
+* `GET /api/productos` - Consulta general del catálogo de productos.
+
+#### 🔒 Rutas Protegidas (Exigen un JWT válido en los Headers)
+* `GET /api/profile` - Obtiene los datos del usuario autenticado actualmente.
+* `POST /api/logout` - Invalida el token actual (cierre de sesión).
+* **Gestión del Carrito de Compras:**
+  * `GET /api/carrito` - Muestra los ítems del carrito del usuario autenticado.
+  * `POST /api/carrito` - Agrega un producto al carrito.
+  * `PUT /api/carrito/{id}` - Modifica la cantidad de un ítem.
+  * `DELETE /api/carrito/{id}` - Remueve un producto del carrito.
+  * `DELETE /api/carrito/vaciar` - Vacía el carrito por completo.
+* **Proceso de Checkout y Órdenes:**
+  * `GET /api/checkout/resumen` - Devuelve el desglose financiero del carrito.
+  * `POST /api/checkout/confirmar` - Valida stock, procesa la orden y vacía el carrito.
 
 ---
 
-### 🛡️ 5. Manejo de Inventario y Códigos de Respuesta HTTP
+### ⚠️ 4. Protección contra Vulnerabilidades Web Comunes
 
-* **Control de Stock:** La API valida en tiempo real la disponibilidad de stock tanto al agregar productos al carrito (`POST /api/carrito`, controlando que la suma acumulada no supere el inventario) como al momento de confirmar la compra (`POST /api/checkout/confirmar`, realizando una doble validación de seguridad antes de descontar las unidades de la base de datos).
-* **Códigos HTTP Estandarizados:** Las respuestas se emiten de manera uniforme en formato JSON acompañadas de códigos de estado precisos:
-  * `200 OK`: Operaciones exitosas de lectura, actualización o eliminación.
-  * `201 Created`: Creación exitosa de recursos o adición al carrito.
-  * `400 Bad Request`: Peticiones inválidas o intento de operaciones con el carrito vacío.
-  * `404 Not Found`: Recursos no encontrados en la base de datos o el carrito.
-  * `422 Unprocessable Entity`: Errores de validación de datos o falta de stock disponible.
+Para garantizar la integridad y seguridad de la aplicación, se incorporaron defensas estructurales apoyadas en el núcleo de Laravel:
+
+* **SQL Injection:** Prevenido de manera nativa mediante el uso de Eloquent ORM y consultas preparadas con asignación de parámetros (*parameter binding*), neutralizando cualquier intento de inyección de código malicioso en las consultas a la base de datos.
+* **CSRF (Cross-Site Request Forgery):** Al tratarse de una API REST moderna basada en autenticación por tokens JWT (*stateless*) y no en sesiones basadas en cookies del navegador, el vector de ataque CSRF queda descartado de forma nativa.
+* **XSS (Cross-Site Scripting):** La arquitectura de la API opera exclusivamente transmitiendo datos estructurados en formato JSON (desacoplada de vistas HTML en el servidor), lo que evita la ejecución de scripts directos en el backend. La sanitización de entradas queda delegada de forma segura al cliente.
+* **Hashing de Contraseñas:** Las credenciales de los usuarios jamás se almacenan en texto plano; se utiliza el algoritmo de cifrado robusto **Bcrypt** mediante las funciones nativas de encriptación de Laravel.
 
 ---
 
-### 🚀 6. Instrucciones de Instalación y Pruebas
+### 🚀 5. Instrucciones de Instalación y Pruebas con Seguridad
 
-Para poner en marcha la API en tu entorno local:
+Para poner en marcha esta versión con JWT en tu entorno local:
 
-1. **Requisitos previos:**
-   Asegúrate de tener PHP, Composer y un servidor MySQL activo (como XAMPP).
+1. **Requisitos previos**
+   Tener PHP, Composer y MySQL activos (XAMPP).
 
-2. **Instalar dependencias:**
-   Abre una terminal en la raíz del proyecto y ejecuta:
+2. **Instalar dependencias**
+   Ejecuta en la terminal del proyecto:
    ```Bash
    composer install
    ```
 
-3. **Configurar el entorno:**
-   El proyecto ya cuenta con el archivo de configuración `.env` vinculado correctamente al servidor local y a la base de datos en phpMyAdmin (`tienda-negocios3`).
+3. **Configurar el entorno y las claves de seguridad**
+Asegúrate de que tu archivo .env esté configurado con tu conexión a la base de datos y genera las llaves de encriptación y JWT ejecutando:
 
-4. **Generar clave y poblar la base de datos:**
-   Ejecuta los siguientes comandos en la terminal para asegurar la llave de seguridad y preparar los registros en la base de datos:
+ ```Bash
+ php artisan key:generate
+ ```
 
-   ```Bash
-   php artisan key:generate
-   ```
+ ```Bash
+ php artisan jwt:secret
+ ```
 
-   ```Bash
-   php artisan migrate --seed
-   ```
+4. **Ejecuta las migraciones**
+ ```Bash
+ php artisan migrate --seed
+ ```
 
-5. **Iniciar el servidor de la API:**
+5. **Inicia el servidor**
+ ```Bash
+ php artisan serve
+ ```
+ El servidor estara disponible en `http://127.0.0.1:8000`.
 
-   ```Bash
-   php artisan serve
-   ```
-   El servidor quedará activo en `http://127.0.0.1:8000`.
+6. **Validación de Seguridad en Postman**
+ * **Sin Token:** Intentar consumir /api/login u otro endpoint protegido sin la cabecera Authorization retornará un error HTTP 401 Unauthorized.
+ ![Error 401](./screenshots/error-401.png)
 
-6. **Pruebas con Postman:**
-   Importa la colección de Postman provista en el repositorio (`.json`) para probar todos los endpoints documentados con ejemplos de request y response listos para usar.
+ * **Con Token:** Realizar una petición a POST /api/login para obtener el access_token, configurarlo como Bearer Token en Postman, y verificar que el acceso a los recursos protegidos responde con éxito (200 OK / 201 Created).
+ ![Éxito 200](./screenshots/exito-200.png)
 
-### 🛸 7. Autor del Trabajo
-
+### 🛸 6. Autor del Trabajo
 - **Nombre y Apellido**: Agustina Martinez Godoy
 - **Email**: martinezgodoyagustin@gmail.com 
 
